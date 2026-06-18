@@ -325,7 +325,7 @@ Svara kort på svenska. Referera till specifika pass. Ge konkreta förslag med t
         {/* AEROBIC EFFICIENCY */}
         {tab==="aero"&&(<div>
           <div style={{fontSize:12,fontWeight:600,color:"#DCE1EB",marginBottom:2}}>Aerob effektivitet</div>
-          <div style={{fontSize:10,color:"#787E8C",marginBottom:10}}>Lugna pass >5km — snabbare tempo vid samma puls = bättre aerob form</div>
+          <div style={{fontSize:10,color:"#787E8C",marginBottom:10}}>Lugna pass &gt;5km — snabbare tempo vid samma puls = bättre aerob form</div>
 
           {/* Pace chart */}
           <div style={{background:"#14161C",borderRadius:10,padding:"12px 6px 6px",border:"1px solid rgba(255,255,255,0.06)",marginBottom:10}}>
