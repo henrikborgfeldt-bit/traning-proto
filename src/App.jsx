@@ -31,18 +31,8 @@ const PACE = [
 ];
 
 const PLAN = [
-  { 
-    w: "2026-W26", 
-    f: "Basvecka", 
-    km: 45, 
-    days: "Mån: Vila\nOns: 10km distans\nFre: 5x1000m tröskel\nSön: 20km Långpass" 
-  },
-  { 
-    w: "2026-W27", 
-    f: "Volym", 
-    km: 55, 
-    days: "Mån: Vila\nOns: 12km distans\nFre: 3x3km tröskel\nSön: 25km Långpass" 
-  }
+  { w: "V26", d: "22–28 jun", f: "Bas + terrängintro", km: 52, pct: { easy: 55, threshold: 15, interval: 15, long: 15 }, days: "Mån: Lugn 8km\nTis: 6×1km@3:50/90s\nOns: Styrka\nTor: Lugn 8km terräng\nFre: Vila\nLör: Backpass 8×90s+10km\nSön: Långpass 20km" },
+  { w: "V27–28", d: "jun/jul", f: "Volymbygge + backar", km: 58, pct: { easy: 50, threshold: 20, interval: 10, long: 20 }, days: "Mån: Lugn 9km\nTis: 3×10min@4:10/2min\nOns: Styrka\nTor: Lugn 10km terräng\nFre: Vila\nLör: 5×4min backintervall\nSön: Långpass 22–24km kuperat" }
 ];
 
 function fmt(s) { 
@@ -112,7 +102,7 @@ export default function App() {
   const [expW, setExpW] = useState(-1);
   const [showHist, setShowHist] = useState(false);
   const [expHist, setExpHist] = useState(null);
-  const [msgs, setMsgs] = useState([{ role: "assistant", content: "Hej! Jag är din AI-coach. Jag har full koll på din historik från Garmin. Du kan be mig ändra i ditt framtida schema (t.ex. vid skada eller extrem trötthet) så justerar jag det direkt!" }]);
+  const [msgs, setMsgs] = useState([{ role: "assistant", content: "Hej! Jag är din AI-coach. Jag har full koll på din historik från Garmin. Du kan be mig ändra i ditt framtida schema så justerar jag det direkt!" }]);
   const [chatIn, setChatIn] = useState("");
   const [chatL, setChatL] = useState(false);
   const chatE = useRef(null);
@@ -150,7 +140,7 @@ export default function App() {
       });
   }, []);
 
-  // HÄMTA DETALJER (SPLITS + GPS-PUNKTER) ENBART NÄR MAN KLICKAR PÅ ETT PASS
+  // HÄMTA DETALJER
   const handleSelectActivity = async (activity) => {
     setSel(activity);
     setLoadingDetail(true);
@@ -172,7 +162,7 @@ export default function App() {
     }
   };
 
-  // Formatera datan för appen
+  // Formatera datan
   const acts = useMemo(() => {
     return dbActivities.map(dbRow => {
       const dm = dbRow.distance_m || 0;
@@ -258,7 +248,7 @@ export default function App() {
       });
   }, [acts]);
 
-  // Aero line
+  // Aero line charts
   const aeroLine = useMemo(() => aeroRuns.map((a, i) => {
     const sl = aeroRuns.slice(Math.max(0, i - 9), i + 1);
     const tp = +(a.pace * a.hr / 1000).toFixed(3);
@@ -273,12 +263,10 @@ export default function App() {
     };
   }), [aeroRuns]);
 
-  // AI Coach API
   const sendChat = async () => {
     if (!chatIn.trim() || chatL) return;
     const u = chatIn.trim();
     setChatIn("");
-    
     const newHistory = [...msgs, { role: "user", content: u }];
     setMsgs(newHistory);
     setChatL(true);
@@ -293,7 +281,7 @@ export default function App() {
       setMsgs([...newHistory, { role: "assistant", content: data.reply }]);
     } catch (err) {
       console.error(err);
-      setMsgs([...newHistory, { role: "assistant", content: "Kunde inte nå servern. Kontrollera anslutningen." }]);
+      setMsgs([...newHistory, { role: "assistant", content: "Kunde inte nå servern." }]);
     } finally {
       setChatL(false);
     }
@@ -315,26 +303,17 @@ export default function App() {
     { id: "chat", l: "Coach", i: "💬" }
   ];
 
-  // Ritar ut den aktiva aktiviteten
   const renderDetail = () => {
     const a = sel;
-    
-    // Mappa de unika splitsen från backend
     const splitData = activeSplits?.map((s) => ({ 
-      km: s.lap_number, 
-      dur: s.duration_s, 
-      hr: s.avg_hr, 
-      cad: s.avg_cadence, 
-      eg: s.elev_gain || 0, 
-      el: s.elev_loss || 0, 
-      paceStr: fmt(s.duration_s), 
-      paceMin: +(s.duration_s / 60).toFixed(2) 
+      km: s.lap_number, dur: s.duration_s, hr: s.avg_hr, cad: s.avg_cadence, 
+      eg: s.elev_gain || 0, el: s.elev_loss || 0, 
+      paceStr: fmt(s.duration_s), paceMin: +(s.duration_s / 60).toFixed(2) 
     })) || [];
 
     return (
       <div>
         <button onClick={() => setSel(null)} style={{ background: "none", border: "none", color: "#F0B428", fontSize: 11, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", padding: "3px 0", marginBottom: 8 }}>← Tillbaka</button>
-        
         <div style={{ background: "#14161C", borderRadius: 10, padding: 16, border: "1px solid rgba(255,255,255,0.06)", marginBottom: 10 }}>
           <div style={{ ...M, fontSize: 9, color: CAT[a.type]?.c, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2 }}>{CAT[a.type]?.l} · {a.date}</div>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: a.type === "race" ? "#F0B428" : "#F5F8FF", margin: "0 0 12px" }}>{a.name}</h2>
@@ -358,7 +337,7 @@ export default function App() {
               const maxEg = Math.max(...splitData.map(s => s.eg), 1);
               return (
                 <div style={{ background: "#14161C", borderRadius: 10, padding: "12px 6px 6px", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 10 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: "#DCE1EB", padding: "0 8px 6px" }}>Mellantider live från Supabase</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "#DCE1EB", padding: "0 8px 6px" }}>Mellantider</div>
                   <ResponsiveContainer width="100%" height={200}>
                     <ComposedChart data={splitData} margin={{ top: 5, right: 45, left: -5, bottom: 5 }}>
                       <XAxis dataKey="km" tick={{ fontSize: 9, fill: "#787E8C" }} axisLine={{ stroke: "#2A2D35" }} tickLine={false} />
@@ -378,42 +357,24 @@ export default function App() {
                   </div>
                 </div>);
             })() : (
-              <div style={{ background: "#14161C", borderRadius: 10, padding: 20, border: "1px solid rgba(255,255,255,0.06)", marginBottom: 10, textAlign: "center" }}>
-                <div style={{ fontSize: 12, color: "#787E8C" }}>Ingen split-data tillgänglig för detta pass.</div>
+              <div style={{ background: "#14161C", borderRadius: 10, padding: 20, border: "1px solid rgba(255,255,255,0.06)", marginBottom: 10, textAlign: "center", color: "#787E8C", fontSize: 12 }}>
+                Ingen split-data tillgänglig för detta pass.
               </div>
             )}
 
-            {/* Karta laddad från GPS-punkternas sanna koordinater */}
             <div style={{ background: "#14161C", borderRadius: 10, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "#DCE1EB", padding: "10px 12px 10px" }}>
-                GPS-spår ({activeTimeSeries.length} punkter)
-              </div>
-              
+              <div style={{ fontSize: 11, fontWeight: 600, color: "#DCE1EB", padding: "10px 12px 10px" }}>GPS-spår ({activeTimeSeries.length} punkter)</div>
               {activeTimeSeries.length > 0 ? (() => {
-                // Filtrera fram giltiga koordinater och skapa en array format [lat, lng]
-                const positions = activeTimeSeries
-                  .filter(p => p.latitude && p.longitude)
-                  .map(p => [p.latitude, p.longitude]);
-
-                if (positions.length === 0) return <div style={{ padding: 20, color: "#787E8C", fontSize: 11 }}>Ingen GPS-data tillgänglig för passet.</div>;
-
+                const positions = activeTimeSeries.filter(p => p.latitude && p.longitude).map(p => [p.latitude, p.longitude]);
+                if (positions.length === 0) return <div style={{ padding: 20, color: "#787E8C", fontSize: 11 }}>Ingen GPS-data tillgänglig.</div>;
                 return (
-                  <MapContainer 
-                    bounds={positions} 
-                    scrollWheelZoom={false}
-                    style={{ width: "100%", height: 250, background: "#0C0E12", zIndex: 0 }}
-                  >
-                    <TileLayer
-                      attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-                      url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                    />
+                  <MapContainer bounds={positions} scrollWheelZoom={false} style={{ width: "100%", height: 250, background: "#0C0E12", zIndex: 0 }}>
+                    <TileLayer attribution='&copy; CARTO' url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
                     <Polyline positions={positions} color="#F0B428" weight={3} opacity={0.8} />
                   </MapContainer>
                 );
               })() : (
-                <div style={{ height: 250, display: "flex", alignItems: "center", justifyContent: "center", color: "#787E8C", fontSize: 11 }}>
-                  Laddar GPS-spår...
-                </div>
+                <div style={{ height: 250, display: "flex", alignItems: "center", justifyContent: "center", color: "#787E8C", fontSize: 11 }}>Laddar GPS-spår...</div>
               )}
             </div>
           </>
@@ -426,7 +387,6 @@ export default function App() {
     return <div style={{ background: "#0C0E12", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#F0B428", fontFamily: "sans-serif" }}>Laddar träningsdata...</div>;
   }
 
-  // Fallback-planer om databasen är tom
   const activePlanList = futurePlan.length > 0 ? futurePlan : PLAN;
 
   return (
@@ -455,6 +415,7 @@ export default function App() {
       </div>
 
       <div style={{ padding: "12px 16px", paddingBottom: legend ? 160 : 12 }}>
+        
         {/* ACTIVITIES LIST */}
         {tab === "activities" && !sel && (
           <div>
@@ -513,6 +474,7 @@ export default function App() {
             <div style={{ fontSize: 12, fontWeight: 600, color: "#DCE1EB", marginBottom: 2 }}>Aerob effektivitet — lugna pass</div>
             <div style={{ fontSize: 10, color: "#787E8C", marginBottom: 10 }}>Snabbare tempo vid samma puls = bättre form</div>
 
+            {/* SCATTER PLOT */}
             <div style={{ background: "#14161C", borderRadius: 10, padding: "12px 6px 6px", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 10 }}>
               <div style={{ fontSize: 10, color: "#8C919B", padding: "0 8px 4px" }}>Tempo (x) vs Puls (y) — nyare pass i blått</div>
               <ResponsiveContainer width="100%" height={200}>
@@ -526,6 +488,49 @@ export default function App() {
                   </Scatter>
                 </ScatterChart>
               </ResponsiveContainer>
+              <div style={{ display: "flex", gap: 10, justifyContent: "center", padding: "4px 0", flexWrap: "wrap" }}>
+                {[["#5090F0", "0–4 veckor"], ["#F0B428", "5–8 veckor"], ["#DC6444", "9–12 veckor"], ["#586070", ">12 veckor"]].map(([c, l]) => (
+                  <div key={l} style={{ display: "flex", alignItems: "center", gap: 3 }}><div style={{ width: 8, height: 8, borderRadius: 4, background: c }} /><span style={{ fontSize: 9, color: "#8C919B" }}>{l}</span></div>
+                ))}
+              </div>
+            </div>
+
+            {/* Tempopuls */}
+            <div style={{ background: "#14161C", borderRadius: 10, padding: "12px 6px 6px", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 10 }}>
+              <div style={{ fontSize: 10, color: "#8C919B", padding: "0 8px 4px" }}>Tempopuls (tempo × puls / 1000) — lägre = bättre</div>
+              <ResponsiveContainer width="100%" height={140}>
+                <ComposedChart data={aeroLine} margin={{ top: 5, right: 8, left: -15, bottom: 5 }}>
+                  <XAxis dataKey="idx" tick={{ fontSize: 8, fill: "#787E8C" }} axisLine={{ stroke: "#2A2D35" }} tickLine={false} />
+                  <YAxis domain={['auto', 'auto']} tick={{ fontSize: 9, fill: "#787E8C" }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ background: "#1A1C24", border: "1px solid #2A2D35", borderRadius: 6, fontSize: 11 }} formatter={(v, n) => [v, n === "tp" ? "Tempopuls" : "10-pass snitt"]} />
+                  <Area type="monotone" dataKey="tp" stroke="#B480E0" strokeWidth={1.5} fill="rgba(180,128,224,0.1)" dot={{ r: 2, fill: "#B480E0", stroke: "#0C0E12", strokeWidth: 1 }} />
+                  <Line type="monotone" dataKey="trendTp" stroke="#B480E0" strokeWidth={2} strokeDasharray="5 3" dot={false} opacity={0.6} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Trend lines */}
+            <div style={{ background: "#14161C", borderRadius: 10, padding: "12px 6px 6px", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 10 }}>
+              <div style={{ fontSize: 10, color: "#8C919B", padding: "0 8px 4px" }}>Tempo-trend (min/km) — lägre = snabbare</div>
+              <ResponsiveContainer width="100%" height={130}>
+                <ComposedChart data={aeroLine} margin={{ top: 5, right: 8, left: -10, bottom: 5 }}>
+                  <XAxis dataKey="idx" tick={{ fontSize: 8, fill: "#787E8C" }} axisLine={{ stroke: "#2A2D35" }} tickLine={false} />
+                  <YAxis domain={['auto', 'auto']} reversed tickFormatter={paceTick} tick={{ fontSize: 9, fill: "#787E8C" }} axisLine={false} tickLine={false} />
+                  <Line type="monotone" dataKey="pace" stroke="#40A878" strokeWidth={1} dot={{ r: 2, fill: "#40A878", stroke: "#0C0E12", strokeWidth: 1 }} />
+                  <Line type="monotone" dataKey="trendPace" stroke="#40A878" strokeWidth={2} strokeDasharray="5 3" dot={false} opacity={0.6} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+            <div style={{ background: "#14161C", borderRadius: 10, padding: "12px 6px 6px", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ fontSize: 10, color: "#8C919B", padding: "0 8px 4px" }}>Puls-trend (bpm) — lägre = bättre</div>
+              <ResponsiveContainer width="100%" height={130}>
+                <ComposedChart data={aeroLine} margin={{ top: 5, right: 8, left: -20, bottom: 5 }}>
+                  <XAxis dataKey="idx" tick={{ fontSize: 8, fill: "#787E8C" }} axisLine={{ stroke: "#2A2D35" }} tickLine={false} />
+                  <YAxis domain={['auto', 'auto']} tick={{ fontSize: 9, fill: "#787E8C" }} axisLine={false} tickLine={false} />
+                  <Line type="monotone" dataKey="hr" stroke="#DC6444" strokeWidth={1} dot={{ r: 2, fill: "#DC6444", stroke: "#0C0E12", strokeWidth: 1 }} />
+                  <Line type="monotone" dataKey="trendHr" stroke="#DC6444" strokeWidth={2} strokeDasharray="5 3" dot={false} opacity={0.6} />
+                </ComposedChart>
+              </ResponsiveContainer>
             </div>
           </div>
         )}
@@ -538,11 +543,54 @@ export default function App() {
                 <div style={{ fontSize: 12, fontWeight: 600, color: "#A0A5B0", textAlign: "left" }}>Genomförda veckor</div>
                 <div style={{ fontSize: 9, color: "#5A5F69", marginTop: 1, textAlign: "left" }}>{histWeeks.length} veckor med faktisk intensitetsfördelning</div>
               </div>
+              <div style={{ fontSize: 14, color: "#787E8C", transform: showHist ? "rotate(180deg)" : "", transition: "transform 0.2s" }}>▾</div>
             </button>
+            {showHist && (
+              <div style={{ marginBottom: 12 }}>
+                {histWeeks.map((w) => {
+                  const isExp = expHist === w.wk;
+                  return (
+                    <div key={w.wk} style={{ marginBottom: 4, borderRadius: 6, background: "#14161C", border: "1px solid rgba(255,255,255,0.04)", overflow: "hidden" }}>
+                      <button onClick={() => setExpHist(isExp ? null : w.wk)} style={{ width: "100%", padding: "7px 12px", background: "none", border: "none", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", textAlign: "left" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div style={{ fontSize: 10, color: "#8C919B" }}>{w.wk} <span style={{ color: "#5A5F69" }}>({w.mon})</span></div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <div style={{ ...M, fontSize: 11, fontWeight: 600, color: "#A0A5B0" }}>{w.km} km</div>
+                            <div style={{ fontSize: 10, color: "#5A5F69", transform: isExp ? "rotate(180deg)" : "", transition: "transform 0.2s" }}>▾</div>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", height: 4, borderRadius: 2, overflow: "hidden", marginTop: 4, gap: 1 }}>
+                          {Object.entries(w.pct).map(([k, v]) => (<div key={k} style={{ width: `${v}%`, background: iC[k] || CAT[k]?.c || "#586070", minWidth: v > 0 ? 2 : 0 }} />))}
+                        </div>
+                      </button>
+                      {isExp && (
+                        <div style={{ padding: "0 12px 8px" }}>
+                          {w.acts.sort((a, b) => a.date.localeCompare(b.date)).map(a => {
+                            const c = CAT[a.type] || CAT.easy;
+                            return (
+                              <div key={a.id} style={{ display: "flex", gap: 6, alignItems: "center", padding: "5px 8px", marginTop: 3, borderRadius: 5, background: "rgba(255,255,255,0.02)" }}>
+                                <div style={{ width: 3, height: 20, borderRadius: 2, background: c.c, flexShrink: 0 }} />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                    <div style={{ fontSize: 10, fontWeight: 500, color: "#B4B9C3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60%" }}>{a.name}</div>
+                                    <div style={{ ...M, fontSize: 9, color: "#787E8C" }}>{a.time}</div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             <div style={{ fontSize: 11, fontWeight: 600, color: "#F0B428", marginBottom: 6 }}>Kommande träningsplan</div>
             {activePlanList.map((p, i) => {
-              const isE = expW === i, isR = p.f?.includes("RACE") || p.title?.includes("LIDINGÖ"); return (
+              const isE = expW === i, isR = p.f?.includes("RACE") || p.title?.includes("LIDINGÖ"); 
+              return (
                 <div key={i} style={{ marginBottom: 6, borderRadius: 8, border: isR ? "1px solid rgba(240,180,40,0.25)" : "1px solid rgba(255,255,255,0.06)", background: "#14161C", overflow: "hidden" }}>
                   <button onClick={() => setExpW(isE ? -1 : i)} style={{ width: "100%", padding: "10px 12px", background: "none", border: "none", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", textAlign: "left" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -553,13 +601,59 @@ export default function App() {
                       <div style={{ ...M, fontSize: 13, fontWeight: 600, color: "#B4B9C3" }}>{p.km || Math.round((p.planned_distance_m || 0)/1000)} km</div>
                     </div>
                   </button>
-                  {isE && (<div style={{ padding: "0 12px 10px", fontSize: 11, color: "#A0A5B0", lineHeight: 1.7 }}>{p.days || p.description}</div>)}
-                </div>);
+                  {isE && (<div style={{ padding: "0 12px 10px", fontSize: 11, color: "#A0A5B0", lineHeight: 1.7 }}>
+                    {(p.days || p.description)?.split("\n").map((d, j) => <div key={j}>{d.trim()}</div>)}
+                  </div>)}
+                </div>
+              );
             })}
           </div>
         )}
 
-        {/* ... (Här rullar dina orörda flikar vidare: RACE, STRATEGY) ... */}
+        {/* RACE */}
+        {tab === "race" && (
+          <div>
+            <div style={{ background: "#14161C", borderRadius: 10, padding: 14, marginBottom: 10, border: "1px solid rgba(240,180,40,0.2)" }}>
+              <div style={{ ...M, fontSize: 9, color: "#F0B428", letterSpacing: 1.5, textTransform: "uppercase" }}>Lördag 26 sep 2026</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#F5F8FF", marginTop: 1 }}>TCS Lidingöloppet 30K</div>
+              <div style={{ fontSize: 10, color: "#787E8C", marginBottom: 10 }}>30 km · ~550 hm · Terräng</div>
+              {[{ l: "STRETCH", t: "Sub 2:00", p: "4:00/km", d: "HM-tempo i 30km terräng. Perfekt dag.", a: true }, { l: "A-MÅL", t: "2:02–2:05", p: "4:05–4:10/km", d: "Flat 30km ~2:02 + terräng." }, { l: "B-MÅL", t: "Sub 2:10", p: "4:20/km", d: "Solid. Kraft kvar sista milen." }].map((g, i) => (
+                <div key={i} style={{ padding: 10, borderRadius: 6, marginBottom: 5, background: g.a ? "linear-gradient(135deg,rgba(240,180,40,0.12),rgba(240,180,40,0.04))" : "rgba(255,255,255,0.03)", border: g.a ? "1px solid rgba(240,180,40,0.2)" : "1px solid rgba(255,255,255,0.06)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ ...M, fontSize: 8, color: g.a ? "#F0B428" : "#787E8C", letterSpacing: 1 }}>{g.l}</span><span style={{ ...M, fontSize: 8, color: "#8C919B" }}>{g.p}</span></div>
+                  <div style={{ ...M, fontSize: 18, fontWeight: 700, color: g.a ? "#FFD246" : "#B4B9C3", marginTop: 1 }}>{g.t}</div>
+                  <div style={{ fontSize: 10, color: "#8C919B", marginTop: 2 }}>{g.d}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "#DCE1EB", marginBottom: 6 }}>Lopphistorik</div>
+            {races.map(r => (
+              <div key={r.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 10px", marginBottom: 4, borderRadius: 6, background: "#14161C", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div><div style={{ fontSize: 11, fontWeight: 600, color: "#F0B428" }}>{r.name}</div><div style={{ fontSize: 9, color: "#787E8C", marginTop: 1 }}>{r.date} · {r.km}km</div></div>
+                <div style={{ textAlign: "right" }}><div style={{ ...M, fontSize: 14, fontWeight: 700, color: "#DCE1EB" }}>{r.time}</div><div style={{ ...M, fontSize: 9, color: "#8C919B" }}>{r.pace}/km</div></div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* STRATEGY */}
+        {tab === "strategy" && (
+          <div>
+            <div style={{ background: "#14161C", borderRadius: 8, padding: 12, border: "1px solid rgba(240,180,40,0.2)", marginBottom: 10 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#FFD246" }}>Lidingöloppet — Tempostrategi</div>
+              <div style={{ fontSize: 10, color: "#8C919B" }}>Negativ split · hushålla sista milen</div>
+            </div>
+            <div style={{ background: "#14161C", borderRadius: 8, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "48px 56px 52px 1fr", padding: "7px 10px", fontSize: 8, ...M, color: "#5A5F69", borderBottom: "1px solid rgba(255,255,255,0.06)", textTransform: "uppercase", letterSpacing: 1 }}><div>KM</div><div>PACE</div><div>TOT</div><div>KOMMENTAR</div></div>
+              {PACE.map((s, i) => {
+                const h = i >= 5; return (
+                  <div key={i} style={{ display: "grid", gridTemplateColumns: "48px 56px 52px 1fr", padding: "8px 10px", borderBottom: i < PACE.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", background: h ? "rgba(220,100,60,0.08)" : "transparent", fontSize: 10 }}>
+                    <div style={{ ...M, fontWeight: 600, color: h ? "#F08C64" : "#B4B9C3" }}>{s.km}</div><div style={{ ...M, color: h ? "#FFA078" : "#A0A5B0" }}>{s.p}</div><div style={{ ...M, color: "#787E8C", fontSize: 9 }}>{s.t}</div><div style={{ color: "#8C919B", lineHeight: 1.3, fontSize: 9 }}>{s.n}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* COACH / CHATT */}
         {tab === "chat" && (
