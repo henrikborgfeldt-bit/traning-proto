@@ -30,9 +30,40 @@ const PACE = [
   { km: "28–30", p: "3:50", t: "~2:00:55", n: "🚀 ALLT UT!" },
 ];
 
+// En proffsig platshållar-plan tills AI-coachen (Steg C) är inkopplad
 const PLAN = [
-  { w: "V26", d: "22–28 jun", f: "Bas + terrängintro", km: 52, pct: { easy: 55, threshold: 15, interval: 15, long: 15 }, days: "Mån: Lugn 8km\nTis: 6×1km@3:50/90s\nOns: Styrka\nTor: Lugn 8km terräng\nFre: Vila\nLör: Backpass 8×90s+10km\nSön: Långpass 20km" },
-  { w: "V27–28", d: "jun/jul", f: "Volymbygge + backar", km: 58, pct: { easy: 50, threshold: 20, interval: 10, long: 20 }, days: "Mån: Lugn 9km\nTis: 3×10min@4:10/2min\nOns: Styrka\nTor: Lugn 10km terräng\nFre: Vila\nLör: 5×4min backintervall\nSön: Långpass 22–24km kuperat" }
+  { 
+    w: "V26", 
+    d: "22–28 jun", 
+    f: "Tröskel & Distans", 
+    km: 55, 
+    pct: { easy: 60, threshold: 20, long: 20 }, 
+    days: "Mån: Vila\nTis: 8km distans (5:00/km)\nOns: 5x1000m tröskel (3:55/km)\nTor: Styrka + 5km jogg\nFre: Vila\nLör: 10km terräng\nSön: 22km Långpass" 
+  },
+  { 
+    w: "V27", 
+    d: "29 jun–5 jul", 
+    f: "Volymbygge", 
+    km: 62, 
+    pct: { easy: 50, interval: 15, long: 35 }, 
+    days: "Mån: Vila\nTis: 10km distans\nOns: 8x600m VO2max\nTor: 8km lätt\nFre: Vila\nLör: 12km kuperat (Abborrbacken-simulering)\nSön: 25km Långpass" 
+  },
+  { 
+    w: "V28", 
+    d: "6–12 jul", 
+    f: "Återhämtningsvecka", 
+    km: 40, 
+    pct: { easy: 80, long: 20 }, 
+    days: "Mån: Vila\nTis: 6km lätt jogg\nOns: 8km distans + 4 stegringar\nTor: Styrka\nFre: Vila\nLör: 8km terräng\nSön: 15km Långpass" 
+  },
+  { 
+    w: "V39", 
+    d: "21–27 sep", 
+    f: "RACE WEEK 🏁", 
+    km: 35, 
+    pct: { easy: 60, race: 40 }, 
+    days: "Mån: Vila\nTis: 3x1000m Tävlingsfart\nOns: Vila\nTor: 4km Shakeout\nFre: Vila\nLör: LIDINGÖLOPPET 30K\nSön: Total vila" 
+  }
 ];
 
 function fmt(s) { 
@@ -115,6 +146,9 @@ export default function App() {
   const [activeSplits, setActiveSplits] = useState([]);
   const [activeTimeSeries, setActiveTimeSeries] = useState([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  
+  // Vi håller futurePlan tom tills vi har ett riktigt AI-API för den, 
+  // då faller koden tillbaka på vår snygga PLAN-mall.
   const [futurePlan, setFuturePlan] = useState([]);
 
   // Hämta grunddata från Render när appen startar
@@ -128,15 +162,6 @@ export default function App() {
       .catch(err => {
         console.error("Kunde inte hämta pass:", err);
         setIsLoading(false);
-      });
-
-    fetch("https://training-backend-4xfk.onrender.com/api/activities")
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.length > 0) setFuturePlan(data);
-      })
-      .catch(() => {
-        console.log("Använder förbyggd träningsplan tills C-stadiet är deployat.");
       });
   }, []);
 
@@ -387,6 +412,7 @@ export default function App() {
     return <div style={{ background: "#0C0E12", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#F0B428", fontFamily: "sans-serif" }}>Laddar träningsdata...</div>;
   }
 
+  // Fallback if futurePlan is empty
   const activePlanList = futurePlan.length > 0 ? futurePlan : PLAN;
 
   return (
@@ -573,7 +599,8 @@ export default function App() {
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                   <div style={{ display: "flex", justifyContent: "space-between" }}>
                                     <div style={{ fontSize: 10, fontWeight: 500, color: "#B4B9C3", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60%" }}>{a.name}</div>
-                                    <div style={{ ...M, fontSize: 9, color: "#787E8C" }}>{a.time}</div>
+                                    {/* HÄR är ändringen: vi la in a.km km · a.time */}
+                                    <div style={{ ...M, fontSize: 9, color: "#787E8C" }}>{a.km} km · {a.time}</div>
                                   </div>
                                 </div>
                               </div>
@@ -595,11 +622,16 @@ export default function App() {
                   <button onClick={() => setExpW(isE ? -1 : i)} style={{ width: "100%", padding: "10px 12px", background: "none", border: "none", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", textAlign: "left" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: isR ? "#FFD246" : "#DCE1EB" }}>{p.w || p.date}</div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: isR ? "#FFD246" : "#DCE1EB" }}>{p.w || p.date} <span style={{fontWeight:400,color:"#787E8C",fontSize:10}}>({p.d})</span></div>
                         <div style={{ fontSize: 9, color: "#787E8C", marginTop: 1 }}>{p.f || p.title}</div>
                       </div>
                       <div style={{ ...M, fontSize: 13, fontWeight: 600, color: "#B4B9C3" }}>{p.km || Math.round((p.planned_distance_m || 0)/1000)} km</div>
                     </div>
+                    {p.pct && (
+                      <div style={{ display: "flex", height: 4, borderRadius: 2, overflow: "hidden", marginTop: 6, gap: 1 }}>
+                        {Object.entries(p.pct).map(([k, v]) => (<div key={k} style={{ width: `${v}%`, background: iC[k] || CAT[k]?.c || "#586070", minWidth: v > 0 ? 2 : 0 }} />))}
+                      </div>
+                    )}
                   </button>
                   {isE && (<div style={{ padding: "0 12px 10px", fontSize: 11, color: "#A0A5B0", lineHeight: 1.7 }}>
                     {(p.days || p.description)?.split("\n").map((d, j) => <div key={j}>{d.trim()}</div>)}
